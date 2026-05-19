@@ -8,19 +8,8 @@ from utils.constants import (
     SELECT_TOOL,
     ROOM_TOOL,
     PERSPECTIVE_TOOL,
-
     RECTANGLE_TOOL,
-    CIRCLE_TOOL,
-    LINE_TOOL,
-
-    SOFA_TOOL,
-    BED_TOOL,
-    TABLE_TOOL,
-    CHAIR_TOOL,
-    
-    FLOOR_TOOL,
-    CEILING_TOOL,
-    WALL_TOOL
+    LINE_TOOL
 )
 
 
@@ -31,108 +20,220 @@ class ToolBar(QWidget):
 
         self.canvas = canvas
 
-        self.setFixedWidth(140)
+        self.setFixedWidth(180)
 
         layout = QVBoxLayout()
 
-        # BUTTONS
-        
-        self.perspective_button = QPushButton("Set Perspective")
-        self.select_button = QPushButton("Select")
+        # TOOL BUTTONS
 
-        self.room_button = QPushButton("Room")
+        self.buttons = {
 
-        self.rectangle_button = QPushButton("Rectangle")
-        self.circle_button = QPushButton("Circle")
-        self.line_button = QPushButton("Line")
+            "Set Perspective": PERSPECTIVE_TOOL,
 
-        self.sofa_button = QPushButton("Sofa")
-        self.bed_button = QPushButton("Bed")
-        self.table_button = QPushButton("Table")
-        self.chair_button = QPushButton("Chair")
-        
-        self.floor_button = QPushButton("Floor")
-        self.ceiling_button = QPushButton("Ceiling")
-        self.wall_button = QPushButton("Wall")
+            "Select": SELECT_TOOL,
 
-        # CONNECTIONS
+            "Room": ROOM_TOOL,
 
-        self.perspective_button.clicked.connect(
-            lambda: self.set_tool(PERSPECTIVE_TOOL)
+            "Rectangle": RECTANGLE_TOOL,
+
+            "Line": LINE_TOOL
+        }
+
+        for name, tool in self.buttons.items():
+
+            button = QPushButton(name)
+
+            button.clicked.connect(
+                lambda _, t=tool:
+                self.set_tool(t)
+            )
+
+            layout.addWidget(button)
+
+        # DELETE BUTTON
+
+        self.delete_button = QPushButton(
+            "Delete Object"
         )
 
-        self.floor_button.clicked.connect(
-            lambda: self.set_tool(FLOOR_TOOL)
+        self.delete_button.clicked.connect(
+            self.delete_selected
         )
 
-        self.ceiling_button.clicked.connect(
-            lambda: self.set_tool(CEILING_TOOL)
+        layout.addWidget(
+            self.delete_button
         )
 
-        self.wall_button.clicked.connect(
-            lambda: self.set_tool(WALL_TOOL)
-        )
-        
-        self.select_button.clicked.connect(
-            lambda: self.set_tool(SELECT_TOOL)
+        # COLOR BUTTON
+
+        self.color_button = QPushButton(
+            "Change Color"
         )
 
-        self.room_button.clicked.connect(
-            lambda: self.set_tool(ROOM_TOOL)
+        self.color_button.clicked.connect(
+            self.change_color
         )
 
-        self.rectangle_button.clicked.connect(
-            lambda: self.set_tool(RECTANGLE_TOOL)
+        layout.addWidget(
+            self.color_button
         )
 
-        self.circle_button.clicked.connect(
-            lambda: self.set_tool(CIRCLE_TOOL)
+        # RESIZE BUTTONS
+
+        self.grow_button = QPushButton(
+            "Increase Size"
         )
 
-        self.line_button.clicked.connect(
-            lambda: self.set_tool(LINE_TOOL)
+        self.grow_button.clicked.connect(
+            self.grow_object
         )
 
-        self.sofa_button.clicked.connect(
-            lambda: self.set_tool(SOFA_TOOL)
+        layout.addWidget(
+            self.grow_button
         )
 
-        self.bed_button.clicked.connect(
-            lambda: self.set_tool(BED_TOOL)
+        self.shrink_button = QPushButton(
+            "Decrease Size"
         )
 
-        self.table_button.clicked.connect(
-            lambda: self.set_tool(TABLE_TOOL)
+        self.shrink_button.clicked.connect(
+            self.shrink_object
         )
 
-        self.chair_button.clicked.connect(
-            lambda: self.set_tool(CHAIR_TOOL)
+        layout.addWidget(
+            self.shrink_button
         )
-
-        # LAYOUT
-
-        layout.addWidget(self.perspective_button)
-        layout.addWidget(self.select_button)
-
-        layout.addWidget(self.floor_button)
-        layout.addWidget(self.ceiling_button)
-        layout.addWidget(self.wall_button)
-        
-        layout.addWidget(self.room_button)
-
-        layout.addWidget(self.rectangle_button)
-        layout.addWidget(self.circle_button)
-        layout.addWidget(self.line_button)
-
-        layout.addWidget(self.sofa_button)
-        layout.addWidget(self.bed_button)
-        layout.addWidget(self.table_button)
-        layout.addWidget(self.chair_button)
 
         layout.addStretch()
 
         self.setLayout(layout)
 
+        # STYLE
+
+        self.setStyleSheet("""
+
+            QWidget {
+
+                background-color: #F7EAEA;
+
+                border-right: 2px solid #D4AF37;
+            }
+
+            QPushButton {
+
+                background-color: #EBC8C8;
+
+                border: 2px solid #D4AF37;
+
+                border-radius: 18px;
+
+                min-height: 45px;
+
+                padding: 8px;
+
+                margin-top: 6px;
+
+                font-size: 13px;
+
+                font-weight: bold;
+
+                color: #4A3B3B;
+            }
+
+            QPushButton:hover {
+
+                background-color: #F6DADA;
+            }
+
+            QPushButton:pressed {
+
+                background-color: #DDAFAF;
+            }
+
+        """)
+
     def set_tool(self, tool):
-        # Durum değişikliğini canvas'a bildir
+
         self.canvas.set_tool(tool)
+
+    def delete_selected(self):
+
+        if not self.canvas.selected_object:
+            return
+
+        self.canvas.objects.remove(
+            self.canvas.selected_object
+        )
+
+        self.canvas.selected_object = None
+
+        self.canvas.update()
+
+    def change_color(self):
+
+        obj = self.canvas.selected_object
+
+        if not obj:
+            return
+
+        colors = [
+            "#D8A7B1",
+            "#E6B8A2",
+            "#CFA5D6",
+            "#F0C987",
+            "#9BB8D3"
+        ]
+
+        current = obj.color
+
+        index = (
+            colors.index(current)
+            if current in colors
+            else 0
+        )
+
+        obj.color = colors[
+            (index + 1) % len(colors)
+        ]
+
+        self.canvas.update()
+
+    def grow_object(self):
+
+        obj = self.canvas.selected_object
+
+        if not obj:
+            return
+
+        if hasattr(obj, "width"):
+
+            obj.width += 15
+
+        if hasattr(obj, "height"):
+
+            obj.height += 15
+
+        self.canvas.update()
+
+    def shrink_object(self):
+
+        obj = self.canvas.selected_object
+
+        if not obj:
+            return
+
+        if hasattr(obj, "width"):
+
+            obj.width = max(
+                20,
+                obj.width - 15
+            )
+
+        if hasattr(obj, "height"):
+
+            obj.height = max(
+                20,
+                obj.height - 15
+            )
+
+        self.canvas.update()

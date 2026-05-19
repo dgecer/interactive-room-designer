@@ -1,24 +1,70 @@
-from PyQt5.QtGui import QColor, QPen, QBrush
+from PyQt5.QtGui import (
+    QColor,
+    QPen,
+    QBrush
+)
 
 from objects.base_object import BaseObject
 
 
 class Circle(BaseObject):
-    def __init__(self, x, y, radius, color="red"):
+
+    def __init__(
+        self,
+        x,
+        y,
+        radius,
+        vp,
+        color="#D97B66"
+    ):
+
         super().__init__(x, y, color)
 
         self.radius = radius
 
-    def draw(self, painter):
-        pen = QPen(QColor(self.color), 2)
-        painter.setPen(pen)
+        self.vp = vp
 
-        brush = QBrush(QColor(self.color))
-        painter.setBrush(brush)
+    def draw(self, painter):
+
+        painter.setPen(
+            QPen(QColor("black"), 2)
+        )
+
+        painter.setBrush(
+            QBrush(QColor(self.color))
+        )
+
+        # PERSPECTIVE SCALE
+
+        distance = abs(
+            self.vp.y() - self.y
+        )
+
+        scale = max(
+            0.5,
+            1 - (distance / 1200)
+        )
+
+        width = int(
+            self.radius * 2
+        )
+
+        height = int(
+            self.radius * 2 * scale
+        )
 
         painter.drawEllipse(
             self.x,
             self.y,
-            self.radius * 2,
-            self.radius * 2
+            width,
+            height
         )
+
+    def contains_point(self, x, y):
+
+        dx = x - self.x
+        dy = y - self.y
+
+        return (
+            dx * dx + dy * dy
+        ) <= self.radius * self.radius

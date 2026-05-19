@@ -1,70 +1,216 @@
-from PyQt5.QtGui import QColor, QBrush, QPen, QPolygon
-from PyQt5.QtCore import QPoint, Qt
+from PyQt5.QtGui import (
+    QColor,
+    QBrush,
+    QPen,
+    QPolygon
+)
+
+from PyQt5.QtCore import (
+    QPoint,
+    Qt
+)
+
 
 class Room:
-    def __init__(self, width, height, vanishing_point):
+
+    def __init__(
+        self,
+        width,
+        height,
+        vanishing_point
+    ):
+
+        self.width = width
+        self.height = height
+
         self.vp = vanishing_point
-        
-        # Karşı Duvarın (Back Wall) varsayılan koordinatları
-        self.bw_w = 300
-        self.bw_h = 200
-        self.bw_x = (width - self.bw_w) / 2
-        self.bw_y = (height - self.bw_h) / 2
-        
-        self.num_cols = 10 
 
-    def draw(self, painter, canvas_width, canvas_height):
-        # 1. KARŞI DUVAR (BACK WALL)
-        painter.setPen(QPen(QColor(50, 50, 50), 3))
-        painter.setBrush(QBrush(QColor(240, 240, 245)))
-        painter.drawRect(int(self.bw_x), int(self.bw_y), int(self.bw_w), int(self.bw_h))
+        # BACK WALL
 
-        # 2. PERSPEKTİF IŞINLARI (RAYS)
-        painter.setPen(QPen(QColor(160, 160, 160), 1))
-        X_points = [self.bw_x + i * (self.bw_w / self.num_cols) for i in range(self.num_cols + 1)]
-        Y_points = [self.bw_y + i * (self.bw_h / self.num_cols) for i in range(self.num_cols + 1)]
+        self.bw_x = 250
+        self.bw_y = 170
 
-        def draw_ray(px, py):
-            dx = px - self.vp.x()
-            dy = py - self.vp.y()
-            if dx == 0 and dy == 0: return
-            scale = 50 
-            painter.drawLine(self.vp.x(), self.vp.y(), int(self.vp.x() + dx * scale), int(self.vp.y() + dy * scale))
+        self.bw_w = 500
+        self.bw_h = 320
 
-        for x in X_points:
-            draw_ray(x, self.bw_y)
-            draw_ray(x, self.bw_y + self.bw_h)
+    def draw(
+        self,
+        painter,
+        width,
+        height
+    ):
 
-        for y in Y_points:
-            draw_ray(self.bw_x, y)
-            draw_ray(self.bw_x + self.bw_w, y)
+        self.width = width
+        self.height = height
 
-        # 3. DİNAMİK DERİNLİK IZGARALARI (Uzaklığa göre artan/azalan gridler)
-        painter.setBrush(Qt.NoBrush)
-        i = 1
-        while True:
-            factor = 1.35 ** i 
+        left = self.bw_x
+        right = self.bw_x + self.bw_w
 
-            x1 = self.vp.x() + (self.bw_x - self.vp.x()) * factor
-            y1 = self.vp.y() + (self.bw_y - self.vp.y()) * factor
-            x2 = self.vp.x() + (self.bw_x + self.bw_w - self.vp.x()) * factor
-            y2 = self.vp.y() + (self.bw_y - self.vp.y()) * factor
-            x3 = self.vp.x() + (self.bw_x + self.bw_w - self.vp.x()) * factor
-            y3 = self.vp.y() + (self.bw_y + self.bw_h - self.vp.y()) * factor
-            x4 = self.vp.x() + (self.bw_x - self.vp.x()) * factor
-            y4 = self.vp.y() + (self.bw_y + self.bw_h - self.vp.y()) * factor
+        top = self.bw_y
+        bottom = self.bw_y + self.bw_h
 
-            # Çizilen poligon ekranı tamamen aştıysa döngüyü durdur (Performans koruması)
-            if (x2 - x1) > canvas_width * 3 or (y4 - y1) > canvas_height * 3:
-                break
+        painter.setPen(Qt.NoPen)
 
-            painter.drawPolygon(QPolygon([
-                QPoint(int(x1), int(y1)), QPoint(int(x2), int(y2)),
-                QPoint(int(x3), int(y3)), QPoint(int(x4), int(y4))
-            ]))
-            i += 1
+        # BACK WALL
 
-        # 4. VP NOKTASI
-        painter.setBrush(QBrush(QColor(255, 80, 80)))
-        painter.setPen(QPen(QColor(180, 0, 0), 2))
-        painter.drawEllipse(self.vp.x() - 8, self.vp.y() - 8, 16, 16)
+        painter.setBrush(
+            QBrush(QColor("#F7EAEA"))
+        )
+
+        back_wall = QPolygon([
+            QPoint(left, top),
+            QPoint(right, top),
+            QPoint(right, bottom),
+            QPoint(left, bottom)
+        ])
+
+        painter.drawPolygon(back_wall)
+
+        # FLOOR
+
+        painter.setBrush(
+            QBrush(QColor("#F3DDDD"))
+        )
+
+        floor = QPolygon([
+            QPoint(left, bottom),
+            QPoint(right, bottom),
+            QPoint(width, height),
+            QPoint(0, height)
+        ])
+
+        painter.drawPolygon(floor)
+
+        # CEILING
+
+        painter.setBrush(
+            QBrush(QColor("#FFF5F5"))
+        )
+
+        ceiling = QPolygon([
+            QPoint(0, 0),
+            QPoint(width, 0),
+            QPoint(right, top),
+            QPoint(left, top)
+        ])
+
+        painter.drawPolygon(ceiling)
+
+        # LEFT WALL
+
+        painter.setBrush(
+            QBrush(QColor("#F0DADA"))
+        )
+
+        left_wall = QPolygon([
+            QPoint(0, 0),
+            QPoint(left, top),
+            QPoint(left, bottom),
+            QPoint(0, height)
+        ])
+
+        painter.drawPolygon(left_wall)
+
+        # RIGHT WALL
+
+        painter.setBrush(
+            QBrush(QColor("#ECD1D1"))
+        )
+
+        right_wall = QPolygon([
+            QPoint(width, 0),
+            QPoint(right, top),
+            QPoint(right, bottom),
+            QPoint(width, height)
+        ])
+
+        painter.drawPolygon(right_wall)
+
+        # GRID
+
+        painter.setPen(
+            QPen(
+                QColor("#E7CFCF"),
+                1
+            )
+        )
+
+        step = 40
+
+        # FLOOR GRID
+
+        for x in range(0, width, step):
+
+            painter.drawLine(
+                x,
+                height,
+                self.vp.x(),
+                self.vp.y()
+            )
+
+        for y in range(bottom, height, step):
+
+            painter.drawLine(
+                0,
+                y,
+                width,
+                y
+            )
+
+        # CEILING GRID
+
+        for x in range(0, width, step):
+
+            painter.drawLine(
+                x,
+                0,
+                self.vp.x(),
+                self.vp.y()
+            )
+
+        for y in range(0, top, step):
+
+            painter.drawLine(
+                0,
+                y,
+                width,
+                y
+            )
+
+        # SIDE WALLS
+
+        for y in range(0, height, step):
+
+            painter.drawLine(
+                0,
+                y,
+                self.vp.x(),
+                self.vp.y()
+            )
+
+            painter.drawLine(
+                width,
+                y,
+                self.vp.x(),
+                self.vp.y()
+            )
+
+        # VANISHING POINT
+
+        painter.setBrush(
+            QBrush(QColor("#D48C8C"))
+        )
+
+        painter.setPen(
+            QPen(
+                QColor("#A35C5C"),
+                2
+            )
+        )
+
+        painter.drawEllipse(
+            self.vp.x() - 8,
+            self.vp.y() - 8,
+            16,
+            16
+        )

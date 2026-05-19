@@ -1,7 +1,6 @@
 SELECT_TOOL = "select"
 
 RECTANGLE_TOOL = "rectangle"
-CIRCLE_TOOL = "circle"
 LINE_TOOL = "line"
 
 SOFA_TOOL = "sofa"
