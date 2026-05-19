@@ -1,97 +1,214 @@
-from PyQt5.QtGui import QColor, QPen
-from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor, QPen, QBrush
+from PyQt5.QtCore import QPoint, Qt
 
 
 class PerspectiveGrid:
 
     @staticmethod
-    def draw(painter, width, height, mode):
+    def draw(
+        painter,
+        width,
+        height,
+        mode,
+        vanishing_points,
+        horizon_y,
+        room_margin
+    ):
 
-        painter.setRenderHint(painter.Antialiasing)
+        painter.setRenderHint(
+            painter.Antialiasing
+        )
+
+        PerspectiveGrid.draw_background(
+            painter,
+            width,
+            height,
+            vanishing_points,
+            horizon_y,
+            room_margin
+        )
 
         if mode == "1-point":
+
             PerspectiveGrid.draw_one_point(
                 painter,
                 width,
-                height
+                height,
+                vanishing_points
             )
 
         elif mode == "2-point":
+
             PerspectiveGrid.draw_two_point(
                 painter,
                 width,
-                height
+                height,
+                vanishing_points
             )
 
         elif mode == "3-point":
+
             PerspectiveGrid.draw_three_point(
                 painter,
                 width,
-                height
+                height,
+                vanishing_points
             )
 
     @staticmethod
-    def draw_one_point(painter, width, height):
+    def draw_background(
+        painter,
+        width,
+        height,
+        vanishing_points,
+        horizon_y,
+        room_margin
+    ):
 
-        center_x = width // 2
-        center_y = height // 2
+        left = room_margin
+        right = width - room_margin
+
+        top = room_margin
+        bottom = height - room_margin
+
+        # BACK WALL
+
+        painter.setPen(Qt.NoPen)
+
+        painter.setBrush(
+            QBrush(QColor(244, 244, 248))
+        )
+
+        back_wall = [
+            QPoint(left, top),
+            QPoint(right, top),
+            QPoint(right, bottom),
+            QPoint(left, bottom)
+        ]
+
+        painter.drawPolygon(back_wall)
+
+        # FLOOR
+
+        painter.setBrush(
+            QBrush(QColor(220, 220, 228))
+        )
+
+        floor = [
+            QPoint(left, bottom),
+            QPoint(right, bottom),
+            QPoint(width, height),
+            QPoint(0, height)
+        ]
+
+        painter.drawPolygon(floor)
+
+        # CEILING
+
+        painter.setBrush(
+            QBrush(QColor(252, 252, 255))
+        )
+
+        ceiling = [
+            QPoint(0, 0),
+            QPoint(width, 0),
+            QPoint(right, top),
+            QPoint(left, top)
+        ]
+
+        painter.drawPolygon(ceiling)
+
+        # LEFT WALL
+
+        painter.setBrush(
+            QBrush(QColor(230, 230, 236))
+        )
+
+        left_wall = [
+            QPoint(0, 0),
+            QPoint(left, top),
+            QPoint(left, bottom),
+            QPoint(0, height)
+        ]
+
+        painter.drawPolygon(left_wall)
+
+        # RIGHT WALL
+
+        painter.setBrush(
+            QBrush(QColor(225, 225, 232))
+        )
+
+        right_wall = [
+            QPoint(width, 0),
+            QPoint(right, top),
+            QPoint(right, bottom),
+            QPoint(width, height)
+        ]
+
+        painter.drawPolygon(right_wall)    
+         
+    def draw_one_point(
+        painter,
+        width,
+        height,
+        vanishing_points
+    ):
+
+        vp = vanishing_points[0]
 
         painter.setPen(
-            QPen(QColor(220, 220, 220), 1)
+            QPen(QColor(210, 210, 210), 1)
         )
 
         step = 40
 
-        for x in range(0, width, step):
+        # FLOOR
+
+        for x in range(0, self.width, step):
+
+            painter.drawLine(
+                x,
+                self.height,
+                self.vp.x(),
+                self.vp.y()
+            )
+
+        # CEILING
+
+        for x in range(0, self.width, step):
 
             painter.drawLine(
                 x,
                 0,
-                center_x,
-                center_y
+                self.vp.x(),
+                self.vp.y()
             )
 
-            painter.drawLine(
-                x,
-                height,
-                center_x,
-                center_y
-            )
+        # LEFT WALL
 
-        for y in range(0, height, step):
+        for y in range(0, self.height, step):
 
             painter.drawLine(
                 0,
                 y,
-                center_x,
-                center_y
+                self.vp.x(),
+                self.vp.y()
             )
 
-            painter.drawLine(
-                width,
-                y,
-                center_x,
-                center_y
-            )
+        # RIGHT WALL
 
-        painter.setPen(
-            QPen(QColor(255, 80, 80), 2)
-        )
-
-        painter.drawEllipse(
-            center_x - 5,
-            center_y - 5,
-            10,
-            10
-        )
 
     @staticmethod
-    def draw_two_point(painter, width, height):
+    def draw_two_point(
+        painter,
+        width,
+        height,
+        vanishing_points
+    ):
 
-        left_vp_x = width // 4
-        right_vp_x = width - width // 4
-
-        horizon_y = height // 2
+        left_vp = vanishing_points[0]
+        right_vp = vanishing_points[1]
 
         painter.setPen(
             QPen(QColor(210, 210, 210), 1)
@@ -104,103 +221,100 @@ class PerspectiveGrid:
             painter.drawLine(
                 x,
                 height,
-                left_vp_x,
-                horizon_y
+                left_vp.x(),
+                left_vp.y()
             )
 
             painter.drawLine(
                 x,
                 height,
-                right_vp_x,
-                horizon_y
+                right_vp.x(),
+                right_vp.y()
             )
 
-        painter.setPen(
-            QPen(QColor(255, 100, 100), 2)
+        PerspectiveGrid.draw_vanishing_point(
+            painter,
+            left_vp
         )
 
-        painter.drawLine(
-            0,
-            horizon_y,
-            width,
-            horizon_y
-        )
-
-        painter.drawEllipse(
-            left_vp_x - 5,
-            horizon_y - 5,
-            10,
-            10
-        )
-
-        painter.drawEllipse(
-            right_vp_x - 5,
-            horizon_y - 5,
-            10,
-            10
+        PerspectiveGrid.draw_vanishing_point(
+            painter,
+            right_vp
         )
 
     @staticmethod
-    def draw_three_point(painter, width, height):
+    def draw_three_point(
+        painter,
+        width,
+        height,
+        vanishing_points
+    ):
 
-        top_x = width // 2
-        top_y = height // 5
-
-        left_x = width // 4
-        horizon_y = height // 2
-
-        right_x = width - width // 4
+        left_vp = vanishing_points[0]
+        right_vp = vanishing_points[1]
+        top_vp = vanishing_points[2]
 
         painter.setPen(
-            QPen(QColor(220, 220, 220), 1)
+            QPen(QColor(210, 210, 210), 1)
         )
 
-        step = 50
+        step = 40
 
         for x in range(0, width, step):
 
             painter.drawLine(
                 x,
                 height,
-                left_x,
-                horizon_y
+                left_vp.x(),
+                left_vp.y()
             )
 
             painter.drawLine(
                 x,
                 height,
-                right_x,
-                horizon_y
+                right_vp.x(),
+                right_vp.y()
             )
 
             painter.drawLine(
                 x,
                 height,
-                top_x,
-                top_y
+                top_vp.x(),
+                top_vp.y()
             )
+
+        PerspectiveGrid.draw_vanishing_point(
+            painter,
+            left_vp
+        )
+
+        PerspectiveGrid.draw_vanishing_point(
+            painter,
+            right_vp
+        )
+
+        PerspectiveGrid.draw_vanishing_point(
+            painter,
+            top_vp
+        )
+
+    @staticmethod
+    def draw_vanishing_point(
+        painter,
+        point
+    ):
+
+        painter.setBrush(
+            QBrush(QColor(255, 80, 80))
+        )
 
         painter.setPen(
-            QPen(QColor(255, 120, 120), 2)
+            QPen(QColor(180, 0, 0), 2)
         )
 
         painter.drawEllipse(
-            top_x - 5,
-            top_y - 5,
-            10,
-            10
-        )
-
-        painter.drawEllipse(
-            left_x - 5,
-            horizon_y - 5,
-            10,
-            10
-        )
-
-        painter.drawEllipse(
-            right_x - 5,
-            horizon_y - 5,
-            10,
-            10
+            point.x() - 7,
+            point.y() - 7,
+            14,
+            14
         )

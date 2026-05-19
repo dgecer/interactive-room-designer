@@ -19,9 +19,10 @@ class Furniture(BaseObject):
         width,
         height,
         furniture_type,
-        perspective_mode,
+        vp,
         color="gray"
     ):
+
         super().__init__(x, y, color)
 
         self.width = width
@@ -29,7 +30,7 @@ class Furniture(BaseObject):
 
         self.furniture_type = furniture_type
 
-        self.perspective_mode = perspective_mode
+        self.vp = vp
 
     def draw(self, painter):
 
@@ -41,75 +42,49 @@ class Furniture(BaseObject):
             QBrush(QColor(self.color))
         )
 
-        if self.perspective_mode == "1-point":
+        # PERSPECTIVE DEPTH
 
-            points = [
-                QPoint(self.x, self.y),
+        depth_x = int(
+            (self.vp.x() - self.x) * 0.08
+        )
 
-                QPoint(
-                    self.x + self.width,
-                    self.y
-                ),
+        depth_y = int(
+            (self.vp.y() - self.y) * 0.08
+        )
 
-                QPoint(
-                    self.x + self.width - 25,
-                    self.y + self.height
-                ),
+        # PERSPECTIVE POLYGON
 
-                QPoint(
-                    self.x - 25,
-                    self.y + self.height
-                )
-            ]
+        points = [
 
-        elif self.perspective_mode == "2-point":
+            QPoint(
+                self.x,
+                self.y
+            ),
 
-            points = [
-                QPoint(self.x, self.y),
+            QPoint(
+                self.x + self.width,
+                self.y
+            ),
 
-                QPoint(
-                    self.x + self.width,
-                    self.y - 20
-                ),
+            QPoint(
+                self.x + self.width + depth_x,
+                self.y + depth_y
+            ),
 
-                QPoint(
-                    self.x + self.width - 30,
-                    self.y + self.height
-                ),
-
-                QPoint(
-                    self.x - 30,
-                    self.y + self.height - 10
-                )
-            ]
-
-        else:
-
-            points = [
-                QPoint(self.x, self.y),
-
-                QPoint(
-                    self.x + self.width,
-                    self.y - 30
-                ),
-
-                QPoint(
-                    self.x + self.width - 40,
-                    self.y + self.height
-                ),
-
-                QPoint(
-                    self.x - 20,
-                    self.y + self.height - 20
-                )
-            ]
+            QPoint(
+                self.x + depth_x,
+                self.y + self.height + depth_y
+            )
+        ]
 
         polygon = QPolygon(points)
 
         painter.drawPolygon(polygon)
 
+        # LABEL
+
         painter.drawText(
             self.x + 10,
-            self.y + 20,
+            self.y + 25,
             self.furniture_type.upper()
         )
