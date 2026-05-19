@@ -24,8 +24,8 @@ class MainWindow(QMainWindow):
 
         layout = QHBoxLayout()
 
-        self.toolbar = ToolBar()
         self.canvas = Canvas()
+        self.toolbar = ToolBar(self.canvas)
         self.properties_panel = PropertiesPanel()
 
         layout.addWidget(self.toolbar)
