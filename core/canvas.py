@@ -11,14 +11,14 @@ from PyQt5.QtCore import Qt, QPoint
 from objects.rectangle import Rectangle
 from objects.line import Line
 from objects.room import Room
+from objects.triangle import Triangle
 
 from utils.constants import (
     PERSPECTIVE_TOOL,
     ROOM_TOOL,
-
     RECTANGLE_TOOL,
     LINE_TOOL,
-
+    TRIANGLE_TOOL,
     SELECT_TOOL
 )
 
@@ -47,6 +47,19 @@ class Canvas(QWidget):
         self.current_shape = None
 
         self.selected_object = None
+
+        # DRAGGING
+
+        self.dragging_object = False
+
+        self.drag_offset_x = 0
+        self.drag_offset_y = 0
+
+        # RESIZE
+
+        self.resizing_object = False
+
+        self.resize_handle_size = 14
 
         # ROOM
 
@@ -136,6 +149,27 @@ class Canvas(QWidget):
                         abs(obj.height) + 16
                     )
 
+                    # RESIZE HANDLE
+
+                    handle_x = (
+                        obj.x + obj.width
+                    )
+
+                    handle_y = (
+                        obj.y + obj.height
+                    )
+
+                    painter.setBrush(
+                        QColor("#D4AF37")
+                    )
+
+                    painter.drawRect(
+                        handle_x - 7,
+                        handle_y - 7,
+                        14,
+                        14
+                    )
+
         # CURRENT SHAPE
 
         if self.current_shape:
@@ -164,6 +198,42 @@ class Canvas(QWidget):
                 ):
 
                     self.selected_object = obj
+
+                    # RESIZE HANDLE
+
+                    if hasattr(obj, "width"):
+
+                        handle_x = (
+                            obj.x + obj.width
+                        )
+
+                        handle_y = (
+                            obj.y + obj.height
+                        )
+
+                        if (
+                            abs(x - handle_x) < 10
+                            and
+                            abs(y - handle_y) < 10
+                        ):
+
+                            self.resizing_object = True
+
+                            self.update()
+
+                            return
+
+                    # DRAGGING
+
+                    self.dragging_object = True
+
+                    self.drag_offset_x = (
+                        x - obj.x
+                    )
+
+                    self.drag_offset_y = (
+                        y - obj.y
+                    )
 
                     break
 
@@ -232,10 +302,67 @@ class Canvas(QWidget):
                 self.room.vp
             )
 
+        # TRIANGLE TOOL
+
+        elif self.current_tool == TRIANGLE_TOOL:
+
+            self.drawing = True
+
+            self.start_x = x
+            self.start_y = y
+
+            self.current_shape = Triangle(
+                x,
+                y,
+                0,
+                0,
+                self.room.vp
+            )
+
     def mouseMoveEvent(self, event):
 
         x = event.x()
         y = event.y()
+
+        # RESIZE OBJECT
+
+        if (
+            self.resizing_object
+            and
+            self.selected_object
+        ):
+
+            self.selected_object.width = (
+                x - self.selected_object.x
+            )
+
+            self.selected_object.height = (
+                y - self.selected_object.y
+            )
+
+            self.update()
+
+            return
+
+        # DRAG OBJECT
+
+        if (
+            self.dragging_object
+            and
+            self.selected_object
+        ):
+
+            self.selected_object.x = (
+                x - self.drag_offset_x
+            )
+
+            self.selected_object.y = (
+                y - self.drag_offset_y
+            )
+
+            self.update()
+
+            return
 
         # MOVE VP
 
@@ -253,7 +380,7 @@ class Canvas(QWidget):
 
             return
 
-        # ROOM DRAW
+        # ROOM DRAWING
 
         if (
             self.current_tool == ROOM_TOOL
@@ -283,6 +410,8 @@ class Canvas(QWidget):
 
             return
 
+        # NO DRAWING
+
         if (
             not self.drawing
             or
@@ -308,13 +437,30 @@ class Canvas(QWidget):
         elif self.current_tool == LINE_TOOL:
 
             self.current_shape.x2 = x
+
             self.current_shape.y2 = y
+
+        # TRIANGLE
+
+        elif self.current_tool == TRIANGLE_TOOL:
+
+            self.current_shape.width = (
+                x - self.start_x
+            )
+
+            self.current_shape.height = (
+                y - self.start_y
+            )
 
         self.update()
 
     def mouseReleaseEvent(self, event):
 
         self.selected_vp = False
+
+        self.dragging_object = False
+
+        self.resizing_object = False
 
         # ROOM
 
@@ -346,7 +492,7 @@ class Canvas(QWidget):
 
     def keyPressEvent(self, event):
 
-        # DELETE OBJECT
+        # DELETE
 
         if (
             event.key() == Qt.Key_Delete
@@ -361,66 +507,3 @@ class Canvas(QWidget):
             self.selected_object = None
 
             self.update()
-
-        # CHANGE COLOR
-
-        elif (
-            event.key() == Qt.Key_C
-            and
-            self.selected_object
-        ):
-
-            current = self.selected_object.color
-
-            colors = [
-                "#D8A7B1",
-                "#E6B8A2",
-                "#CFA5D6",
-                "#F0C987",
-                "#9BB8D3"
-            ]
-
-            index = (
-                colors.index(current)
-                if current in colors
-                else 0
-            )
-
-            self.selected_object.color = colors[
-                (index + 1) % len(colors)
-            ]
-
-            self.update()
-
-    def wheelEvent(self, event):
-
-        if not self.selected_object:
-            return
-
-        delta = event.angleDelta().y()
-
-        scale = 15 if delta > 0 else -15
-
-        # RECTANGLE RESIZE
-
-        if hasattr(
-            self.selected_object,
-            "width"
-        ):
-
-            self.selected_object.width = max(
-                20,
-                self.selected_object.width + scale
-            )
-
-        if hasattr(
-            self.selected_object,
-            "height"
-        ):
-
-            self.selected_object.height = max(
-                20,
-                self.selected_object.height + scale
-            )
-
-        self.update()

@@ -1,15 +1,27 @@
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
-    QPushButton
+    QPushButton,
+    QColorDialog,
+    QFileDialog,
+    QMessageBox,
+    QShortcut
 )
+
+from PyQt5.QtGui import QKeySequence
 
 from utils.constants import (
     SELECT_TOOL,
     ROOM_TOOL,
     PERSPECTIVE_TOOL,
     RECTANGLE_TOOL,
+    TRIANGLE_TOOL,
     LINE_TOOL
+)
+
+from utils.file_handler import (
+    save_scene,
+    load_scene
 )
 
 
@@ -20,7 +32,7 @@ class ToolBar(QWidget):
 
         self.canvas = canvas
 
-        self.setFixedWidth(180)
+        self.setFixedWidth(200)
 
         layout = QVBoxLayout()
 
@@ -35,6 +47,8 @@ class ToolBar(QWidget):
             "Room": ROOM_TOOL,
 
             "Rectangle": RECTANGLE_TOOL,
+
+            "Triangle": TRIANGLE_TOOL,
 
             "Line": LINE_TOOL
         }
@@ -64,6 +78,20 @@ class ToolBar(QWidget):
             self.delete_button
         )
 
+        # ROTATE BUTTON
+
+        self.rotate_button = QPushButton(
+            "Rotate"
+        )
+
+        self.rotate_button.clicked.connect(
+            self.rotate_object
+        )
+
+        layout.addWidget(
+            self.rotate_button
+        )
+
         # COLOR BUTTON
 
         self.color_button = QPushButton(
@@ -78,35 +106,48 @@ class ToolBar(QWidget):
             self.color_button
         )
 
-        # RESIZE BUTTONS
+        # SAVE BUTTON
 
-        self.grow_button = QPushButton(
-            "Increase Size"
+        self.save_button = QPushButton(
+            "Save Scene"
         )
 
-        self.grow_button.clicked.connect(
-            self.grow_object
-        )
-
-        layout.addWidget(
-            self.grow_button
-        )
-
-        self.shrink_button = QPushButton(
-            "Decrease Size"
-        )
-
-        self.shrink_button.clicked.connect(
-            self.shrink_object
+        self.save_button.clicked.connect(
+            self.save_current_scene
         )
 
         layout.addWidget(
-            self.shrink_button
+            self.save_button
+        )
+
+        # LOAD BUTTON
+
+        self.load_button = QPushButton(
+            "Load Scene"
+        )
+
+        self.load_button.clicked.connect(
+            self.load_saved_scene
+        )
+
+        layout.addWidget(
+            self.load_button
         )
 
         layout.addStretch()
 
         self.setLayout(layout)
+
+        # SHORTCUTS
+
+        self.save_shortcut = QShortcut(
+            QKeySequence("Ctrl+S"),
+            self
+        )
+
+        self.save_shortcut.activated.connect(
+            self.save_current_scene
+        )
 
         # STYLE
 
@@ -169,6 +210,17 @@ class ToolBar(QWidget):
 
         self.canvas.update()
 
+    def rotate_object(self):
+
+        obj = self.canvas.selected_object
+
+        if not obj:
+            return
+
+        obj.rotation += 15
+
+        self.canvas.update()
+
     def change_color(self):
 
         obj = self.canvas.selected_object
@@ -176,64 +228,69 @@ class ToolBar(QWidget):
         if not obj:
             return
 
-        colors = [
-            "#D8A7B1",
-            "#E6B8A2",
-            "#CFA5D6",
-            "#F0C987",
-            "#9BB8D3"
-        ]
+        color = QColorDialog.getColor()
 
-        current = obj.color
+        if color.isValid():
 
-        index = (
-            colors.index(current)
-            if current in colors
-            else 0
+            obj.color = color.name()
+
+            self.canvas.update()
+
+    def save_current_scene(self):
+
+        filename, _ = QFileDialog.getSaveFileName(
+
+            self,
+
+            "Save Scene",
+
+            "scene.json",
+
+            "JSON Files (*.json)"
         )
 
-        obj.color = colors[
-            (index + 1) % len(colors)
-        ]
-
-        self.canvas.update()
-
-    def grow_object(self):
-
-        obj = self.canvas.selected_object
-
-        if not obj:
+        if not filename:
             return
 
-        if hasattr(obj, "width"):
+        save_scene(
+            self.canvas.objects,
+            filename
+        )
 
-            obj.width += 15
+        QMessageBox.information(
 
-        if hasattr(obj, "height"):
+            self,
 
-            obj.height += 15
+            "Saved",
 
-        self.canvas.update()
+            "Scene saved successfully."
+        )
 
-    def shrink_object(self):
+    def load_saved_scene(self):
 
-        obj = self.canvas.selected_object
+        filename, _ = QFileDialog.getOpenFileName(
 
-        if not obj:
+            self,
+
+            "Load Scene",
+
+            "",
+
+            "JSON Files (*.json)"
+        )
+
+        if not filename:
             return
 
-        if hasattr(obj, "width"):
+        data = load_scene(filename)
 
-            obj.width = max(
-                20,
-                obj.width - 15
-            )
+        print(data)
 
-        if hasattr(obj, "height"):
+        QMessageBox.information(
 
-            obj.height = max(
-                20,
-                obj.height - 15
-            )
+            self,
 
-        self.canvas.update()
+            "Loaded",
+
+            "Scene loaded successfully."
+        )

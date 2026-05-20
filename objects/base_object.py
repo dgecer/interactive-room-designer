@@ -4,7 +4,7 @@ class BaseObject:
         self,
         x,
         y,
-        color="black"
+        color
     ):
 
         self.x = x
@@ -12,8 +12,6 @@ class BaseObject:
 
         self.color = color
 
-        self.selected = False
+        # TRANSFORMATIONS
 
-    def contains(self, x, y):
-
-        return False
+        self.rotation = 0

@@ -22,3 +22,19 @@ class Line(BaseObject):
         painter.setBrush(QBrush(QColor(self.color).darker(110)))
         painter.drawPolygon(QPolygon([QPoint(self.x, self.y), QPoint(self.x2, self.y2), 
                                       QPoint(x2_b, y2_b), QPoint(x1_b, y1_b)]))
+        
+    def contains_point(self, x, y):
+
+        min_x = min(self.x, self.x2)
+        max_x = max(self.x, self.x2)
+
+        min_y = min(self.y, self.y2)
+        max_y = max(self.y, self.y2)
+
+        padding = 10
+
+        return (
+            min_x - padding <= x <= max_x + padding
+            and
+            min_y - padding <= y <= max_y + padding
+        )

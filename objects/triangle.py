@@ -10,7 +10,7 @@ from PyQt5.QtCore import QPoint
 from objects.base_object import BaseObject
 
 
-class Rectangle(BaseObject):
+class Triangle(BaseObject):
 
     def __init__(
         self,
@@ -19,7 +19,7 @@ class Rectangle(BaseObject):
         width,
         height,
         vp,
-        color="#D8A7B1"
+        color="#CFA5D6"
     ):
 
         super().__init__(x, y, color)
@@ -55,13 +55,16 @@ class Rectangle(BaseObject):
             QBrush(QColor(self.color))
         )
 
-        # FRONT FACE
+        # FRONT
 
-        p1 = QPoint(self.x, self.y)
+        p1 = QPoint(
+            self.x + self.width // 2,
+            self.y
+        )
 
         p2 = QPoint(
-            self.x + self.width,
-            self.y
+            self.x,
+            self.y + self.height
         )
 
         p3 = QPoint(
@@ -69,49 +72,46 @@ class Rectangle(BaseObject):
             self.y + self.height
         )
 
-        p4 = QPoint(
-            self.x,
-            self.y + self.height
-        )
-
         # DEPTH
 
         depth = 0.35
 
-        p5 = QPoint(
+        p4 = QPoint(
             int(p1.x() + (self.vp.x() - p1.x()) * depth),
             int(p1.y() + (self.vp.y() - p1.y()) * depth)
         )
 
-        p6 = QPoint(
+        p5 = QPoint(
             int(p2.x() + (self.vp.x() - p2.x()) * depth),
             int(p2.y() + (self.vp.y() - p2.y()) * depth)
         )
 
-        p7 = QPoint(
+        p6 = QPoint(
             int(p3.x() + (self.vp.x() - p3.x()) * depth),
             int(p3.y() + (self.vp.y() - p3.y()) * depth)
         )
 
-        # FRONT
+        # FRONT FACE
 
         painter.drawPolygon(
-            QPolygon([p1, p2, p3, p4])
+            QPolygon([p1, p2, p3])
         )
 
-        # SIDE
+        # SIDE FACE
 
         painter.drawPolygon(
-            QPolygon([p2, p6, p7, p3])
+            QPolygon([p2, p5, p6, p3])
         )
 
-        # TOP
+        # TOP FACE
 
         painter.drawPolygon(
-            QPolygon([p1, p2, p6, p5])
+            QPolygon([p1, p2, p5, p4])
         )
-        
-        painter.drawLine(p4, p7)
+
+        painter.drawLine(p1, p4)
+        painter.drawLine(p2, p5)
+        painter.drawLine(p3, p6)
 
         painter.restore()
 
@@ -137,7 +137,7 @@ class Rectangle(BaseObject):
             self.y + self.height
         )
 
-        padding = 40
+        padding = 30
 
         return (
             min_x - padding <= x <= max_x + padding

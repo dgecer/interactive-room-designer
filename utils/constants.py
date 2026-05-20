@@ -2,6 +2,7 @@ SELECT_TOOL = "select"
 
 RECTANGLE_TOOL = "rectangle"
 LINE_TOOL = "line"
+TRIANGLE_TOOL = "triangle"
 
 SOFA_TOOL = "sofa"
 BED_TOOL = "bed"
